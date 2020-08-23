@@ -15,6 +15,35 @@ def test_get_all_products(client):
     assert not json_response.get('results')
 
 
+def test_read_product(client: FlaskClient, session: Session):
+    brand = Brand(name="test1", country_code="RU")
+    category1 = Category(name="test1")
+    category2 = Category(name="test2")
+
+    product = Product(
+        name="test",
+        rating=5,
+        brand=brand,
+        featured=False,
+        categories=[category1, category2],
+        items_in_stock=10
+    )
+
+    session.add(product)
+    session.commit()
+
+    response = client.get(f"/products/{product.id}")
+
+    json_response = json.loads(response.data)
+
+    assert response.status_code == 200
+    assert json_response["id"] == product.id
+    assert json_response["name"] == product.name
+    assert json_response["rating"] == product.rating
+    assert json_response["brand"]["id"] == product.brand_id
+    assert json_response["items_in_stock"] == product.items_in_stock
+
+
 def test_create_product(client: FlaskClient, session: Session):
     brand = Brand(name="test", country_code="RU")
     category = Category(name="test")
