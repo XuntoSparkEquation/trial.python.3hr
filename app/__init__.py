@@ -1,18 +1,26 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, jsonify
 from flask_migrate import Migrate
-
+from flask_sqlalchemy import SQLAlchemy
 
 # Instantiate Flask extensions
+from app.models.exceptions import InvalidUsage
+
 db = SQLAlchemy()
 migrate = Migrate()
 
 
-def create_app(extra_config_settings={}):
+def create_app(extra_config_settings=None):
     """Create a Flask application.
     """
     # Instantiate Flask
+    if extra_config_settings is None:
+        extra_config_settings = {}
+
     app = Flask(__name__)
+
+    @app.errorhandler(InvalidUsage)
+    def app_error_handler(e: InvalidUsage):
+        return jsonify({"status": e.msg}), e.code
 
     # Load common settings
     app.config.from_object('app.settings')

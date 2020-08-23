@@ -1,5 +1,10 @@
-from app import db
 import datetime
+from typing import Set, Dict, Any
+
+from app import db
+from app.models.exceptions import NotFound
+
+FEATURED_THRESHOLD = 8
 
 
 class Product(db.Model):
@@ -18,6 +23,30 @@ class Product(db.Model):
 
     items_in_stock = db.Column(db.Integer, nullable=False)
     receipt_date = db.Column(db.DateTime, nullable=True)
+
+    def on_update(self, data: Dict[str, Any]):
+        if data["featured"] is None and data["rating"] > FEATURED_THRESHOLD:
+            self.featured = True
+
+    @classmethod
+    def create(cls, data: Dict[str, Any]):
+        product = Product(**data)
+        product.on_update(data)
+        return product
+
+    @classmethod
+    def get(cls, product_id: int):
+        product: Product = db.session.query(Product).filter_by(id=product_id).first()
+
+        if product is None:
+            raise NotFound(product_id)
+
+        return product
+
+    def update(self, data: Dict[str, Any]):
+        for key, value in data.items():
+            setattr(self, key, value)
+        self.on_update(data)
 
     @property
     def serialized(self):
@@ -44,6 +73,15 @@ class Brand(db.Model):
 
     products = db.relationship('Product', backref='brand')
 
+    @classmethod
+    def get(cls, brand_id: int):
+        brand: Brand = db.session.query(Brand).filter_by(id=brand_id).first()
+
+        if brand is None:
+            raise NotFound(brand_id)
+
+        return brand
+
     @property
     def serialized(self):
         return {
@@ -58,6 +96,19 @@ class Category(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.Unicode(50), nullable=False)
+
+    @classmethod
+    def get_all(cls, ids: Set[int]):
+        categories = db.session.query(Category).filter(
+            Category.id.in_(ids)
+        ).all()
+
+        db_ids = {record.id for record in categories}
+
+        if len(categories) != len(ids):
+            raise Exception(str(ids.difference(db_ids)))
+
+        return categories
 
     @property
     def serialized(self):

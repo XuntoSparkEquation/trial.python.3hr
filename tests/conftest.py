@@ -1,7 +1,7 @@
 import pytest
+
 from app import create_app, db as the_db
 from app.commands.init_db import init_db
-
 
 # Initialize the Flask-App with test-specific settings
 the_app = create_app(dict(
@@ -45,8 +45,6 @@ def session(db, request):
 
     def teardown():
         transaction.rollback()
-        connection.close()
-        session.remove()
 
     request.addfinalizer(teardown)
     return session
