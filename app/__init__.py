@@ -1,8 +1,9 @@
 from flask import Flask, jsonify
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-
 # Instantiate Flask extensions
+from pydantic import ValidationError
+
 from app.models.exceptions import InvalidUsage
 
 db = SQLAlchemy()
@@ -21,6 +22,10 @@ def create_app(extra_config_settings=None):
     @app.errorhandler(InvalidUsage)
     def app_error_handler(e: InvalidUsage):
         return jsonify({"status": e.msg}), e.code
+
+    @app.errorhandler(ValidationError)
+    def app_error_handler(e: ValidationError):
+        return jsonify({"errors": e.json()}), 400
 
     # Load common settings
     app.config.from_object('app.settings')
