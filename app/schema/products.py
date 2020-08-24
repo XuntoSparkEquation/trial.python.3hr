@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from email import utils as email_utils
-from typing import Optional, Any
+from typing import Optional, Any, TypedDict, List
 
 from pydantic import BaseModel, constr, confloat, PositiveInt, validator, conset
 
@@ -13,7 +13,7 @@ CategoryID = int
 BrandID = int
 
 
-class ProductCreateSchema(BaseModel):
+class ProductCreateRequest(BaseModel):
     """
     Defines schema and validation for creation request.
     """
@@ -62,7 +62,7 @@ class ProductCreateSchema(BaseModel):
         return expiration_date
 
 
-class ProductUpdateSchema(ProductCreateSchema):
+class ProductUpdateRequest(ProductCreateRequest):
     """
     Defines schema and validation for update request.
     Mostly makes all fields optional (like Partial in Typescript).
@@ -74,3 +74,36 @@ class ProductUpdateSchema(ProductCreateSchema):
     categories: Optional[conset(CategoryID, min_items=1, max_items=5)]
 
     items_in_stock: Optional[PositiveInt]
+
+
+class BrandPresentation(TypedDict):
+    """
+    Describes Brand resource presentation.
+    """
+    id: int
+    name: str
+    country_code: str
+
+
+class CategoryPresentation(TypedDict):
+    """
+    Describes Category resource presentation.
+    """
+    id: int
+    name: str
+
+
+class ProductPresentation(TypedDict):
+    """
+    Describes Product resource presentation
+    """
+    id: int
+    name: str
+    rating: int
+    featured: bool
+    items_in_stock: int
+    receipt_date: datetime
+    brand: BrandPresentation
+    categories: List[CategoryPresentation]
+    expiration_date: datetime
+    created_at: datetime

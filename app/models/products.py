@@ -3,6 +3,7 @@ from typing import Set, Dict, Any
 
 from app import db
 from app.models.exceptions import NotFound
+from app.schema.products import ProductPresentation, BrandPresentation, CategoryPresentation
 
 FEATURED_THRESHOLD = 8
 
@@ -56,7 +57,7 @@ class Product(db.Model):
         self.on_update(data)
 
     @property
-    def serialized(self):
+    def serialized(self) -> ProductPresentation:
         return {
             'id': self.id,
             'name': self.name,
@@ -90,7 +91,7 @@ class Brand(db.Model):
         return brand
 
     @property
-    def serialized(self):
+    def serialized(self) -> BrandPresentation:
         return {
             'id': self.id,
             'name': self.name,
@@ -118,7 +119,7 @@ class Category(db.Model):
         return categories
 
     @property
-    def serialized(self):
+    def serialized(self) -> CategoryPresentation:
         return {
             'id': self.id,
             'name': self.name,
