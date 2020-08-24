@@ -214,10 +214,10 @@ def test_acceptance_criteria_2(client: FlaskClient):
     assert len(json_response["errors"]) == 1
 
 
-def test_acceptance_criteria_3(client: FlaskClient):
+def test_acceptance_criteria_3(client: FlaskClient, session: Session):
     now = datetime.utcnow()
 
-    # Try to pass expiration date that is too early
+    # Try to pass expiration date that is too early (creation)
     response = client.post('/products', data=json.dumps({
         "name": "test",
         "rating": 5,
@@ -225,6 +225,20 @@ def test_acceptance_criteria_3(client: FlaskClient):
         "categories": [0],
         "expiration_date": email_utils.format_datetime(now),
         "items_in_stock": 1
+    }), content_type='application/json')
+    json_response = json.loads(response.data)
+
+    assert response.status_code == 400
+    assert len(json_response["errors"]) == 1
+    assert json_response["errors"][0]["loc"][0] == 'expiration_date'
+
+    # Try to pass expiration date that is too early (update)
+    product = create_basic_db_product()
+    session.add(product)
+    session.commit()
+
+    response = client.patch(f"/products/{product.id}", data=json.dumps({
+        "expiration_date": email_utils.format_datetime(now),
     }), content_type='application/json')
     json_response = json.loads(response.data)
 
