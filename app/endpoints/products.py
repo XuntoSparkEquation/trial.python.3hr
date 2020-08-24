@@ -15,7 +15,7 @@ def build_product_args(data: ProductSchema) -> Dict[str, Any]:
     Result can be used can be used as constructor argument
     or can be iterated to replace field values.
     Result always has enough data to create new Product instance.
-    @param data: ProductSchema
+    @param data: request data ProductSchema
     @return: dict with data
     """
     create_args = data.dict(exclude_unset=True)
