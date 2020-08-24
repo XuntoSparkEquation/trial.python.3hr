@@ -170,27 +170,32 @@ def test_acceptance_criteria_1(client: FlaskClient):
     response = client.post('/products', data=json.dumps({
         "name": "s" * 51,
         "rating": 11,
-        "brand": -1,
-        "categories": [-1],
         "items_in_stock": -1
     }), content_type='application/json')
     json_response = json.loads(response.data)
 
     assert response.status_code == 400
     assert json_response["errors"]
-    assert len(json_response["errors"]) == 3
+    assert len(json_response["errors"]) == 5
 
 
-def test_acceptance_criteria_2(client: FlaskClient):
-    # Existence of categories doesn't matter as it is checked on validation step
-    # before service even tries to fetch database objects
+def test_acceptance_criteria_2(client: FlaskClient, session: Session):
+    # Create brands and categories to test with
+    brand = create_basic_db_brand()
+    categories = [
+        create_basic_db_category() for i in range(6)
+    ]
+
+    session.add(brand)
+    session.add_all(categories)
+    session.commit()
 
     # Try to pass more categories than is allowed
     response = client.post('/products', data=json.dumps({
         "name": "test",
         "rating": 5,
-        "brand": 0,
-        "categories": [0, 1, 2, 3, 4, 5, 6],
+        "brand": brand.id,
+        "categories": [c.id for c in categories],
         "items_in_stock": 1
     }), content_type='application/json')
     json_response = json.loads(response.data)
@@ -203,7 +208,7 @@ def test_acceptance_criteria_2(client: FlaskClient):
     response = client.post('/products', data=json.dumps({
         "name": "test",
         "rating": 5,
-        "brand": 0,
+        "brand": brand.id,
         "categories": [],
         "items_in_stock": 1
     }), content_type='application/json')
