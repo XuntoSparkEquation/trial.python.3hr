@@ -48,6 +48,9 @@ class Product(db.Model):
             if key == "featured" and value is None:
                 continue
 
+            if not hasattr(self, key):
+                continue
+
             setattr(self, key, value)
         self.on_update(data)
 
