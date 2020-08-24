@@ -1,5 +1,5 @@
 import datetime
-from typing import Set, Dict, Any
+from typing import Set, Dict
 
 from app import db
 from app.models.exceptions import NotFound
@@ -25,18 +25,29 @@ class Product(db.Model):
     items_in_stock = db.Column(db.Integer, nullable=False)
     receipt_date = db.Column(db.DateTime, nullable=True)
 
-    def on_update(self, data: Dict[str, Any]):
+    def on_update(self, data: Dict):
         if data.get("featured", None) is None and data.get("rating", 0) > FEATURED_THRESHOLD:
             self.featured = True
 
     @classmethod
-    def create(cls, data: Dict[str, Any]):
+    def create(cls, data: Dict):
+        """
+        Create new product.
+        @param data: Product data. Should include all needed fields.
+        @return: New product.
+        """
         product = Product(**data)
         product.on_update(data)
         return product
 
     @classmethod
     def get(cls, product_id: int):
+        """
+        Get product by its ID.
+        Throws NotFound if there is product with such id.
+        @param product_id: ID of product we need.
+        @return: Wanted product.
+        """
         product: Product = db.session.query(Product).filter_by(id=product_id).first()
 
         if product is None:
@@ -44,7 +55,11 @@ class Product(db.Model):
 
         return product
 
-    def update(self, data: Dict[str, Any]):
+    def update(self, data: Dict):
+        """
+        Update product.
+        @param data: Product data. Can be partial.
+        """
         data = {
             key: value
             for key, value in data.items()
@@ -58,6 +73,10 @@ class Product(db.Model):
 
     @property
     def serialized(self) -> ProductPresentation:
+        """
+        Get product presentation, prepared to be turned into JSON.
+        @return: Product representation.
+        """
         return {
             'id': self.id,
             'name': self.name,
@@ -83,6 +102,12 @@ class Brand(db.Model):
 
     @classmethod
     def get(cls, brand_id: int):
+        """
+        Get brand by its ID.
+        Throws NotFound if there is brand with such id.
+        @param brand_id: ID of brand we need.
+        @return: Wanted brand.
+        """
         brand: Brand = db.session.query(Brand).filter_by(id=brand_id).first()
 
         if brand is None:
@@ -92,6 +117,10 @@ class Brand(db.Model):
 
     @property
     def serialized(self) -> BrandPresentation:
+        """
+        Get brand presentation, prepared to be turned into JSON.
+        @return: Brand presentation.
+        """
         return {
             'id': self.id,
             'name': self.name,
@@ -107,6 +136,12 @@ class Category(db.Model):
 
     @classmethod
     def get_all(cls, ids: Set[int]):
+        """
+        Get categories with specified ids.
+        Throws NotFound if any Category not found.
+        @param ids: IDs of wanted Categories.
+        @return: Wanted categories.
+        """
         categories = db.session.query(Category).filter(
             Category.id.in_(ids)
         ).all()
@@ -120,6 +155,10 @@ class Category(db.Model):
 
     @property
     def serialized(self) -> CategoryPresentation:
+        """
+        Get category presentation, prepared to be turned into JSON.
+        @return: Category presentation.
+        """
         return {
             'id': self.id,
             'name': self.name,

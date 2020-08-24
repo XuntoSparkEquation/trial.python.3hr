@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict
 
 from flask import Blueprint, jsonify, request
 
@@ -9,7 +9,7 @@ from app.schema.products import ProductCreateRequest, ProductUpdateRequest
 products_blueprint = Blueprint('products', __name__)
 
 
-def build_product_args(data: ProductCreateRequest) -> Dict[str, Any]:
+def build_product_args(data: ProductCreateRequest) -> Dict:
     """
     Turn ProductSchema into dict for updating Product orm object.
     Result can be used can be used as constructor argument
