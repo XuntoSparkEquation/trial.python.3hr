@@ -7,7 +7,7 @@ from flask.testing import FlaskClient
 from sqlalchemy.orm import Session
 
 from app.models.exceptions import NotFound
-from app.models.products import Brand, Category, Product
+from app.models.products import Brand, Category, Product, FEATURED_THRESHOLD
 
 
 def create_basic_db_brand() -> Category:
@@ -26,13 +26,25 @@ def create_basic_db_product() -> Product:
     return product
 
 
-def test_get_all_products(client):
+def test_get_all_products(client: FlaskClient, session: Session):
+    # Test without any db records
     response = client.get('/products')
-
     json_response = json.loads(response.data)
 
     assert response.status_code == 200
     assert not json_response.get('results')
+
+    # Populate and test with db records
+    for i in range(10):
+        product = create_basic_db_product()
+        session.add(product)
+    session.commit()
+
+    response = client.get('/products')
+    json_response = json.loads(response.data)
+
+    assert response.status_code == 200
+    assert len(json_response.get('results')) == 10
 
 
 def test_read_product(client: FlaskClient, session: Session):
@@ -197,3 +209,51 @@ def test_acceptance_criteria_3(client: FlaskClient):
     assert response.status_code == 400
     assert len(json_response["errors"]) == 1
     assert json_response["errors"][0]["loc"][0] == 'expiration_date'
+
+
+def test_acceptance_criteria_4(client: FlaskClient, session: Session):
+    # create product
+    product = create_basic_db_product()
+    session.add(product)
+    session.commit()
+
+    assert product.featured is False
+
+    # Make sure product doesn't become featured when rating is less then threshold
+    response = client.put(f'/products/{product.id}', data=json.dumps({
+        "name": product.id,
+        "rating": FEATURED_THRESHOLD - 1,
+        "brand": product.brand_id,
+        "categories": [product.categories[0].id],
+        "items_in_stock": product.items_in_stock
+    }), content_type='application/json')
+    json_response = json.loads(response.data)
+
+    assert response.status_code == 200
+    assert json_response["featured"] is False
+
+    # Check if featured is updated when rating is more then threshold
+    response = client.put(f'/products/{product.id}', data=json.dumps({
+        "name": product.id,
+        "rating": FEATURED_THRESHOLD + 1,
+        "brand": product.brand_id,
+        "categories": [product.categories[0].id],
+        "items_in_stock": product.items_in_stock
+    }), content_type='application/json')
+    json_response = json.loads(response.data)
+
+    assert response.status_code == 200
+    assert json_response["featured"] is True
+
+    # Make sure product do not stop being featured if rating becomes less then threshold
+    response = client.put(f'/products/{product.id}', data=json.dumps({
+        "name": product.id,
+        "rating": FEATURED_THRESHOLD - 1,
+        "brand": product.brand_id,
+        "categories": [product.categories[0].id],
+        "items_in_stock": product.items_in_stock
+    }), content_type='application/json')
+    json_response = json.loads(response.data)
+
+    assert response.status_code == 200
+    assert json_response["featured"] is True

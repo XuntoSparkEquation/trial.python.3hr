@@ -45,6 +45,9 @@ class Product(db.Model):
 
     def update(self, data: Dict[str, Any]):
         for key, value in data.items():
+            if key == "featured" and value is None:
+                continue
+
             setattr(self, key, value)
         self.on_update(data)
 

@@ -15,7 +15,7 @@ BrandID = int
 class ProductSchema(BaseModel):
     name: Name
     rating: Rating
-    featured: Optional[bool] = False
+    featured: Optional[bool]
 
     receipt_date: Optional[datetime]
     expiration_date: Optional[datetime]
