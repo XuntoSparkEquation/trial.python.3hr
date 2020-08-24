@@ -79,18 +79,28 @@ def test_create_product(client: FlaskClient, session: Session):
     now = datetime.utcnow()
 
     # request creation of product
-    response = client.post('/products', data=json.dumps({
-        "name": "",
+    product_create_request = {
+        "name": "test",
         "rating": 5,
         "brand": brand.id,
         "categories": [category.id],
         "receipt_date": email_utils.format_datetime(now),
         "expiration_date": email_utils.format_datetime(now + timedelta(days=30)),
         "items_in_stock": 10
-    }), content_type='application/json')
+    }
+    response = client.post('/products', data=json.dumps(product_create_request), content_type='application/json')
+    json_response = json.loads(response.data)
 
     # check status
     assert response.status_code == 201
+
+    # check if data is the same
+    product = Product.get(json_response["id"])
+    assert product.name == product_create_request["name"]
+    assert product.rating == product_create_request["rating"]
+    assert product.brand_id == brand.id
+    assert product.categories == [category]
+    assert product.items_in_stock == product_create_request["items_in_stock"]
 
 
 def test_update_product(client: FlaskClient, session: Session):
