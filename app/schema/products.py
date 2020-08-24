@@ -13,7 +13,10 @@ CategoryID = int
 BrandID = int
 
 
-class ProductSchema(BaseModel):
+class ProductCreateSchema(BaseModel):
+    """
+    Defines schema and validation for creation request.
+    """
     name: Name
     rating: Rating
     featured: Optional[bool]
@@ -47,7 +50,11 @@ class ProductSchema(BaseModel):
         return expiration_date
 
 
-class ProductUpdateSchema(ProductSchema):
+class ProductUpdateSchema(ProductCreateSchema):
+    """
+    Defines schema and validation for update request.
+    Mostly makes all fields optional (like Partial in Typescript).
+    """
     name: Optional[Name]
     rating: Optional[Rating]
 

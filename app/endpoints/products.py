@@ -4,18 +4,18 @@ from flask import Blueprint, jsonify, request
 
 from app import db
 from app.models.products import Product, Brand, Category
-from app.schema.products import ProductSchema, ProductUpdateSchema
+from app.schema.products import ProductCreateSchema, ProductUpdateSchema
 
 products_blueprint = Blueprint('products', __name__)
 
 
-def build_product_args(data: ProductSchema) -> Dict[str, Any]:
+def build_product_args(data: ProductCreateSchema) -> Dict[str, Any]:
     """
     Turn ProductSchema into dict for updating Product orm object.
     Result can be used can be used as constructor argument
     or can be iterated to replace field values.
     Result always has enough data to create new Product instance.
-    @param data: request data ProductSchema
+    @param data: request data ProductCreateSchema
     @return: dict with data
     """
     create_args = data.dict(exclude_unset=True)
@@ -45,10 +45,10 @@ def create_product():
     """
     Create new product.
 
-    @see ProductSchema for request body fields.
+    @see ProductCreateSchema for request body fields.
     @return: Created product representation.
     """
-    create_input = ProductSchema(**request.get_json())
+    create_input = ProductCreateSchema(**request.get_json())
 
     create_data = build_product_args(create_input)
     product: Product = Product.create(create_data)
