@@ -1,4 +1,6 @@
 import json
+from datetime import datetime
+from email import utils as email_utils
 
 import pytest
 from flask.testing import FlaskClient
@@ -8,11 +10,11 @@ from app.models.exceptions import NotFound
 from app.models.products import Brand, Category, Product
 
 
-def create_basic_db_brand():
+def create_basic_db_brand() -> Category:
     return Brand(name="test", country_code="RU")
 
 
-def create_basic_db_category():
+def create_basic_db_category() -> Category:
     return Category(name="test")
 
 
@@ -127,3 +129,71 @@ def test_delete_product(client: FlaskClient, session: Session):
     # check if product deleted
     with pytest.raises(NotFound):
         Product.get(product_id)
+
+
+def test_acceptance_criteria_1(client: FlaskClient):
+    # Try to break all validation rules (excluding ones from other criteria)
+    response = client.post('/products', data=json.dumps({
+        "name": "s" * 51,
+        "rating": 11,
+        "brand": -1,
+        "categories": [-1],
+        "items_in_stock": -1
+    }), content_type='application/json')
+    json_response = json.loads(response.data)
+
+    assert response.status_code == 400
+    assert json_response["errors"]
+    assert len(json_response["errors"]) == 3
+
+
+def test_acceptance_criteria_2(client: FlaskClient):
+    # Existence of categories doesn't matter as it is checked on validation step
+    # before service even tries to fetch database objects
+
+    # Try to pass more categories than is allowed
+    response = client.post('/products', data=json.dumps({
+        "name": "test",
+        "rating": 5,
+        "brand": 0,
+        "categories": [0, 1, 2, 3, 4, 5, 6],
+        "items_in_stock": 1
+    }), content_type='application/json')
+    json_response = json.loads(response.data)
+
+    assert response.status_code == 400
+    assert json_response["errors"]
+    assert len(json_response["errors"]) == 1
+
+    # Try to pass less categories than is allowed
+    response = client.post('/products', data=json.dumps({
+        "name": "test",
+        "rating": 5,
+        "brand": 0,
+        "categories": [],
+        "items_in_stock": 1
+    }), content_type='application/json')
+    json_response = json.loads(response.data)
+
+    assert response.status_code == 400
+    assert json_response["errors"]
+    assert len(json_response["errors"]) == 1
+
+
+def test_acceptance_criteria_3(client: FlaskClient):
+    now = datetime.utcnow()
+
+    # Try to pass expiration date that is too early
+    response = client.post('/products', data=json.dumps({
+        "name": "test",
+        "rating": 5,
+        "brand": 0,
+        "categories": [0],
+        "expiration_date": email_utils.format_datetime(now),
+        "items_in_stock": 1
+    }), content_type='application/json')
+    json_response = json.loads(response.data)
+
+    assert response.status_code == 400
+    assert len(json_response["errors"]) == 1
+    assert json_response["errors"][0]["loc"][0] == 'expiration_date'

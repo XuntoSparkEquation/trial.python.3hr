@@ -25,7 +25,7 @@ def create_app(extra_config_settings=None):
 
     @app.errorhandler(ValidationError)
     def app_error_handler(e: ValidationError):
-        return jsonify({"errors": e.json()}), 400
+        return jsonify({"errors": e.errors()}), 400
 
     # Load common settings
     app.config.from_object('app.settings')

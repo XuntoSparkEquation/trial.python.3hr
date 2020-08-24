@@ -1,4 +1,5 @@
 from datetime import datetime
+from email import utils as email_utils
 from typing import Optional
 
 from pydantic import BaseModel, constr, confloat, PositiveInt, validator, conset
@@ -24,14 +25,22 @@ class ProductSchema(BaseModel):
 
     items_in_stock: PositiveInt
 
-    @staticmethod
+    @validator("receipt_date", "expiration_date", pre=True)
+    def parse_rfc_1123_datetime(cls, date):
+        if isinstance(date, str):
+            parsed_datetime = email_utils.parsedate_to_datetime(date)
+            if parsed_datetime is None:
+                return date
+            return parsed_datetime
+        return date
+
     @validator("expiration_date")
-    def validate_expiration_date(cls, v):
+    def validate_expiration_date(cls, expiration_date):
         today = datetime.utcnow()
 
-        if v.expiration_date:
-            time_to_expire = v.expiration_date - today
+        if expiration_date:
+            time_to_expire = expiration_date - today
             if time_to_expire.days < MINIMAL_EXPIRATION_DAYS:
-                raise ValueError(f"can't set expiration in less then ${MINIMAL_EXPIRATION_DAYS} days")
+                raise ValueError(f"can't set expiration in less then {MINIMAL_EXPIRATION_DAYS} days")
 
-        return v.expiration_date
+        return expiration_date
