@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from flask_json_errorhandler import init_errorhandler
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 # Instantiate Flask extensions
@@ -26,6 +27,8 @@ def create_app(extra_config_settings=None):
     @app.errorhandler(ValidationError)
     def app_error_handler(e: ValidationError):
         return jsonify({"errors": e.errors()}), 400
+
+    init_errorhandler(app)
 
     # Load common settings
     app.config.from_object('app.settings')

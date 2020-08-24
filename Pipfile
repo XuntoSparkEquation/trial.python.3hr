@@ -12,6 +12,7 @@ Flask-SQLAlchemy = "==2.4.3"
 Flask-User = {git = "https://github.com/lingthio/Flask-User.git", ref = "master"}
 setuptools = "==45"
 pydantic = "*"
+flask_json_errorhandler = "*"
 
 [dev-packages]
 pytest = "==5.4.3"
