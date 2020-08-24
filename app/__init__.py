@@ -21,7 +21,7 @@ def create_app(extra_config_settings=None):
 
     @app.errorhandler(InvalidUsage)
     def app_error_handler(e: InvalidUsage):
-        return jsonify({"status": e.msg}), e.code
+        return jsonify({"errors": e.errors()}), e.code
 
     @app.errorhandler(ValidationError)
     def app_error_handler(e: ValidationError):

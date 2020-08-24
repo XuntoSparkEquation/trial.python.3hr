@@ -221,7 +221,7 @@ def test_acceptance_criteria_4(client: FlaskClient, session: Session):
 
     # Make sure product doesn't become featured when rating is less then threshold
     response = client.put(f'/products/{product.id}', data=json.dumps({
-        "name": product.id,
+        "name": product.name,
         "rating": FEATURED_THRESHOLD - 1,
         "brand": product.brand_id,
         "categories": [product.categories[0].id],
@@ -234,7 +234,7 @@ def test_acceptance_criteria_4(client: FlaskClient, session: Session):
 
     # Check if featured is updated when rating is more then threshold
     response = client.put(f'/products/{product.id}', data=json.dumps({
-        "name": product.id,
+        "name": product.name,
         "rating": FEATURED_THRESHOLD + 1,
         "brand": product.brand_id,
         "categories": [product.categories[0].id],
@@ -247,7 +247,7 @@ def test_acceptance_criteria_4(client: FlaskClient, session: Session):
 
     # Make sure product do not stop being featured if rating becomes less then threshold
     response = client.put(f'/products/{product.id}', data=json.dumps({
-        "name": product.id,
+        "name": product.name,
         "rating": FEATURED_THRESHOLD - 1,
         "brand": product.brand_id,
         "categories": [product.categories[0].id],
@@ -257,3 +257,39 @@ def test_acceptance_criteria_4(client: FlaskClient, session: Session):
 
     assert response.status_code == 200
     assert json_response["featured"] is True
+
+
+def test_not_found(client: FlaskClient, session: Session):
+    response = client.get(f"/products/0")
+    json_response = json.loads(response.data)
+
+    assert response.status_code == 404
+    assert json_response["errors"]
+
+    response = client.post('/products', data=json.dumps({
+        "name": "test",
+        "rating": 5,
+        "brand": 0,
+        "categories": [0],
+        "items_in_stock": 10
+    }), content_type='application/json')
+    json_response = json.loads(response.data)
+
+    assert response.status_code == 404
+    assert json_response["errors"]
+
+    brand = create_basic_db_brand()
+    session.add(brand)
+    session.commit()
+
+    response = client.post('/products', data=json.dumps({
+        "name": "test",
+        "rating": 5,
+        "brand": brand.id,
+        "categories": [0],
+        "items_in_stock": 10
+    }), content_type='application/json')
+    json_response = json.loads(response.data)
+
+    assert response.status_code == 404
+    assert json_response["errors"]
