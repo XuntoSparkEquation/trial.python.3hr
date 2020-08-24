@@ -9,6 +9,9 @@ FEATURED_THRESHOLD = 8
 
 
 class Product(db.Model):
+    """
+    Product db class.
+    """
     __tablename__ = 'products'
     id = db.Column(db.Integer, primary_key=True)
 
@@ -92,6 +95,9 @@ class Product(db.Model):
 
 
 class Brand(db.Model):
+    """
+    Brand db class.
+    """
     __tablename__ = 'brands'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -129,6 +135,9 @@ class Brand(db.Model):
 
 
 class Category(db.Model):
+    """
+    Category db class.
+    """
     __tablename__ = 'categories'
 
     id = db.Column(db.Integer, primary_key=True)
