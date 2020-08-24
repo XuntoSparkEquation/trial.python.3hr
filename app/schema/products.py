@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from email import utils as email_utils
-from typing import Optional
+from typing import Optional, Any
 
 from pydantic import BaseModel, constr, confloat, PositiveInt, validator, conset
 
@@ -30,7 +30,12 @@ class ProductCreateSchema(BaseModel):
     items_in_stock: PositiveInt
 
     @validator("receipt_date", "expiration_date", pre=True)
-    def parse_rfc_1123_datetime(cls, date):
+    def parse_rfc_1123_datetime(cls, date: Any):
+        """
+        Parse string value as date in RFC 1123 format.
+        @param date: date with unknown type, will be processed if string. Otherwise validator is skipped.
+        @return: datetime object or string (if unable to parse as RFC 1123 formatted string)
+        """
         if isinstance(date, str):
             parsed_datetime = email_utils.parsedate_to_datetime(date)
             if parsed_datetime is None:
@@ -39,7 +44,14 @@ class ProductCreateSchema(BaseModel):
         return date
 
     @validator("expiration_date")
-    def validate_expiration_date(cls, expiration_date):
+    def validate_expiration_date(cls, expiration_date: datetime):
+        """
+        Makes sure expiration date is valid (according to acceptance criteria 3).
+        Throws ValueError if expiration date in less then defined by MINIMAL_EXPIRATION.
+
+        @param expiration_date: expiration date
+        @return: expiration date if it is valid
+        """
         today = datetime.utcnow()
 
         if expiration_date:
