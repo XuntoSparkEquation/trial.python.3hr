@@ -39,7 +39,7 @@ class Product(db.Model):
         product: Product = db.session.query(Product).filter_by(id=product_id).first()
 
         if product is None:
-            raise NotFound(product_id)
+            raise NotFound([f"Product[{product_id}]"])
 
         return product
 
@@ -81,7 +81,7 @@ class Brand(db.Model):
         brand: Brand = db.session.query(Brand).filter_by(id=brand_id).first()
 
         if brand is None:
-            raise NotFound(brand_id)
+            raise NotFound([f"Brand[{brand_id}]"])
 
         return brand
 
@@ -109,7 +109,7 @@ class Category(db.Model):
         db_ids = {record.id for record in categories}
 
         if len(categories) != len(ids):
-            raise Exception(str(ids.difference(db_ids)))
+            raise NotFound([f"Category[{category_id}]" for category_id in ids.difference(db_ids)])
 
         return categories
 

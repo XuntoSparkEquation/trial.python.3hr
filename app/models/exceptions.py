@@ -1,3 +1,6 @@
+from typing import List
+
+
 class InvalidUsage(Exception):
     msg: str
     code: int
@@ -9,5 +12,5 @@ class InvalidUsage(Exception):
 
 
 class NotFound(InvalidUsage):
-    def __init__(self, resource_id):
-        super(NotFound, self).__init__(f"resource not found: {resource_id}", 404)
+    def __init__(self, resources: List[str]):
+        super(NotFound, self).__init__(f"Resources are not found: {resources}", 404)
