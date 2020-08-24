@@ -45,6 +45,8 @@ def session(db, request):
 
     def teardown():
         transaction.rollback()
+        connection.close()
+        session.remove()
 
     request.addfinalizer(teardown)
     return session
