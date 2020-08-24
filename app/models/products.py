@@ -25,7 +25,7 @@ class Product(db.Model):
     receipt_date = db.Column(db.DateTime, nullable=True)
 
     def on_update(self, data: Dict[str, Any]):
-        if data["featured"] is None and data["rating"] > FEATURED_THRESHOLD:
+        if data.get("featured", None) is None and data.get("rating", 0) > FEATURED_THRESHOLD:
             self.featured = True
 
     @classmethod
@@ -44,14 +44,15 @@ class Product(db.Model):
         return product
 
     def update(self, data: Dict[str, Any]):
+        data = {
+            key: value
+            for key, value in data.items()
+            if hasattr(self, key)
+        }
+
         for key, value in data.items():
-            if key == "featured" and value is None:
-                continue
-
-            if not hasattr(self, key):
-                continue
-
             setattr(self, key, value)
+
         self.on_update(data)
 
     @property

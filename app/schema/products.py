@@ -1,10 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from email import utils as email_utils
 from typing import Optional
 
 from pydantic import BaseModel, constr, confloat, PositiveInt, validator, conset
 
-MINIMAL_EXPIRATION_DAYS = 30
+# Minimal expiration time, 30 days with 5 second as precision
+MINIMAL_EXPIRATION = timedelta(days=30) - timedelta(seconds=5)
 
 Name = constr(max_length=50)
 Rating = confloat(ge=0, le=10)
@@ -40,7 +41,17 @@ class ProductSchema(BaseModel):
 
         if expiration_date:
             time_to_expire = expiration_date - today
-            if time_to_expire.days < MINIMAL_EXPIRATION_DAYS:
-                raise ValueError(f"can't set expiration in less then {MINIMAL_EXPIRATION_DAYS} days")
+            if time_to_expire < MINIMAL_EXPIRATION:
+                raise ValueError(f"can't set expiration in less then {MINIMAL_EXPIRATION} days")
 
         return expiration_date
+
+
+class ProductUpdateSchema(ProductSchema):
+    name: Optional[Name]
+    rating: Optional[Rating]
+
+    brand: Optional[BrandID]
+    categories: Optional[conset(CategoryID, min_items=1, max_items=5)]
+
+    items_in_stock: Optional[PositiveInt]

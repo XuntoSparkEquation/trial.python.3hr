@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 
 from app import db
 from app.models.products import Product, Brand, Category
-from app.schema.products import ProductSchema
+from app.schema.products import ProductSchema, ProductUpdateSchema
 
 products_blueprint = Blueprint('products', __name__)
 
@@ -18,7 +18,7 @@ def build_product_args(data: ProductSchema) -> Dict[str, Any]:
     @param data: ProductSchema
     @return: dict with data
     """
-    create_args = data.dict()
+    create_args = data.dict(exclude_unset=True)
 
     if data.brand is not None:
         create_args["brand"] = Brand.get(data.brand)
@@ -70,18 +70,17 @@ def read_product(product_id: int):
     return jsonify(product.serialized)
 
 
-@products_blueprint.route('/products/<int:product_id>', methods=['PUT'])
+@products_blueprint.route('/products/<int:product_id>', methods=['PATCH'])
 def update_product(product_id: int):
     """
-    Update product by replacing old values with new ones.
-    All original fields are needed. Product is practically
-    "replaced" by new one.
+    Update product. Endpoint accepts changes (patch update).
 
-    @see ProductSchema for request body fields.
+    @see ProductUpdateSchema for request body fields.
     @param product_id: ID of product we want to update.
     @return: Representation of product after update.
     """
-    update_input = ProductSchema(**request.get_json())
+
+    update_input = ProductUpdateSchema(**request.get_json())
     update_data = build_product_args(update_input)
 
     product: Product = Product.get(product_id)

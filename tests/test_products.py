@@ -1,5 +1,5 @@
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from email import utils as email_utils
 
 import pytest
@@ -76,12 +76,16 @@ def test_create_product(client: FlaskClient, session: Session):
     session.add(category)
     session.commit()
 
+    now = datetime.utcnow()
+
     # request creation of product
     response = client.post('/products', data=json.dumps({
         "name": "",
         "rating": 5,
         "brand": brand.id,
         "categories": [category.id],
+        "receipt_date": email_utils.format_datetime(now),
+        "expiration_date": email_utils.format_datetime(now + timedelta(days=30)),
         "items_in_stock": 10
     }), content_type='application/json')
 
@@ -104,14 +108,15 @@ def test_update_product(client: FlaskClient, session: Session):
     # Commit everything
     session.commit()
 
+    # check before change
+    product_pre_update = product.serialized
+
     # request update
-    response = client.put(f"/products/{product.id}", data=json.dumps({
-        "name": "test2",
-        "rating": 6,
-        "brand": new_brand.id,
-        "categories": [new_category.id],
-        "items_in_stock": 2
-    }), content_type='application/json')
+    response = client.patch(
+        f"/products/{product.id}",
+        data=json.dumps({"name": "test2"}),
+        content_type='application/json'
+    )
 
     # check status
     assert response.status_code == 200
@@ -119,10 +124,17 @@ def test_update_product(client: FlaskClient, session: Session):
     # check if product changed in database
     session.refresh(product)
     assert product.name == "test2"
-    assert product.rating == 6
-    assert product.brand_id == new_brand.id
-    assert set(product.categories) == {new_category}
-    assert product.items_in_stock == 2
+
+    # make sure everything else is NOT changed
+    product_post_update = product.serialized
+    assert product_post_update["id"] == product_pre_update["id"]
+    assert product_post_update["featured"] == product_pre_update["featured"]
+    assert product_post_update["brand"] == product_pre_update["brand"]
+    assert product_post_update["categories"] == product_pre_update["categories"]
+    assert product_post_update["items_in_stock"] == product_pre_update["items_in_stock"]
+    assert product_post_update["receipt_date"] == product_pre_update["receipt_date"]
+    assert product_post_update["expiration_date"] == product_pre_update["expiration_date"]
+    assert product_post_update["created_at"] == product_pre_update["created_at"]
 
 
 def test_delete_product(client: FlaskClient, session: Session):
@@ -220,12 +232,8 @@ def test_acceptance_criteria_4(client: FlaskClient, session: Session):
     assert product.featured is False
 
     # Make sure product doesn't become featured when rating is less then threshold
-    response = client.put(f'/products/{product.id}', data=json.dumps({
-        "name": product.name,
+    response = client.patch(f'/products/{product.id}', data=json.dumps({
         "rating": FEATURED_THRESHOLD - 1,
-        "brand": product.brand_id,
-        "categories": [product.categories[0].id],
-        "items_in_stock": product.items_in_stock
     }), content_type='application/json')
     json_response = json.loads(response.data)
 
@@ -233,12 +241,8 @@ def test_acceptance_criteria_4(client: FlaskClient, session: Session):
     assert json_response["featured"] is False
 
     # Check if featured is updated when rating is more then threshold
-    response = client.put(f'/products/{product.id}', data=json.dumps({
-        "name": product.name,
+    response = client.patch(f'/products/{product.id}', data=json.dumps({
         "rating": FEATURED_THRESHOLD + 1,
-        "brand": product.brand_id,
-        "categories": [product.categories[0].id],
-        "items_in_stock": product.items_in_stock
     }), content_type='application/json')
     json_response = json.loads(response.data)
 
@@ -246,12 +250,8 @@ def test_acceptance_criteria_4(client: FlaskClient, session: Session):
     assert json_response["featured"] is True
 
     # Make sure product do not stop being featured if rating becomes less then threshold
-    response = client.put(f'/products/{product.id}', data=json.dumps({
-        "name": product.name,
+    response = client.patch(f'/products/{product.id}', data=json.dumps({
         "rating": FEATURED_THRESHOLD - 1,
-        "brand": product.brand_id,
-        "categories": [product.categories[0].id],
-        "items_in_stock": product.items_in_stock
     }), content_type='application/json')
     json_response = json.loads(response.data)
 
