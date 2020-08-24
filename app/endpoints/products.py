@@ -9,7 +9,7 @@ from app.schema.products import ProductCreateRequest, ProductUpdateRequest
 products_blueprint = Blueprint('products', __name__)
 
 
-def build_product_args(data: ProductCreateRequest) -> Dict:
+def build_product_args(data: ProductUpdateRequest) -> Dict:
     """
     Turn ProductSchema into dict for updating Product orm object.
     Result can be used can be used as constructor argument

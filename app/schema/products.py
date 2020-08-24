@@ -13,21 +13,21 @@ CategoryID = int
 BrandID = int
 
 
-class ProductCreateRequest(BaseModel):
+class ProductUpdateRequest(BaseModel):
     """
-    Defines schema and validation for creation request.
+    Defines schema and validation for update request.
     """
-    name: Name
-    rating: Rating
+    name: Optional[Name]
+    rating: Optional[Rating]
     featured: Optional[bool]
 
     receipt_date: Optional[datetime]
     expiration_date: Optional[datetime]
 
-    brand: BrandID
-    categories: conset(CategoryID, min_items=1, max_items=5)
+    brand: Optional[BrandID]
+    categories: Optional[conset(CategoryID, min_items=1, max_items=5)]
 
-    items_in_stock: PositiveInt
+    items_in_stock: Optional[PositiveInt]
 
     @validator("receipt_date", "expiration_date", pre=True)
     def parse_rfc_1123_datetime(cls, date: Any):
@@ -52,9 +52,9 @@ class ProductCreateRequest(BaseModel):
         @param expiration_date: expiration date
         @return: expiration date if it is valid
         """
-        today = datetime.utcnow()
 
-        if expiration_date:
+        if isinstance(expiration_date, datetime):
+            today = datetime.utcnow()
             time_to_expire = expiration_date - today
             if time_to_expire < MINIMAL_EXPIRATION:
                 raise ValueError(f"can't set expiration in less then {MINIMAL_EXPIRATION} days")
@@ -62,18 +62,18 @@ class ProductCreateRequest(BaseModel):
         return expiration_date
 
 
-class ProductUpdateRequest(ProductCreateRequest):
+class ProductCreateRequest(ProductUpdateRequest):
     """
-    Defines schema and validation for update request.
-    Mostly makes all fields optional (like Partial in Typescript).
+    Defines schema and validation for creation request.
+    Mostly makes some fields required.
     """
-    name: Optional[Name]
-    rating: Optional[Rating]
+    name: Name
+    rating: Rating
 
-    brand: Optional[BrandID]
-    categories: Optional[conset(CategoryID, min_items=1, max_items=5)]
+    brand: BrandID
+    categories: conset(CategoryID, min_items=1, max_items=5)
 
-    items_in_stock: Optional[PositiveInt]
+    items_in_stock: PositiveInt
 
 
 class BrandPresentation(TypedDict):
