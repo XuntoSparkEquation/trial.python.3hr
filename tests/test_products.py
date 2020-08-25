@@ -107,15 +107,6 @@ def test_update_product(client: FlaskClient, session: Session):
     # create product
     product = create_basic_db_product()
     session.add(product)
-
-    # create new brand and category to update with
-    new_brand = Brand(name="test2", country_code="RU")
-    new_category = Category(name="test2")
-
-    session.add(new_brand)
-    session.add(new_category)
-
-    # Commit everything
     session.commit()
 
     # check before change
