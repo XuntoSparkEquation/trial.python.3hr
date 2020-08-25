@@ -220,14 +220,22 @@ def test_acceptance_criteria_2(client: FlaskClient, session: Session):
 
 
 def test_acceptance_criteria_3(client: FlaskClient, session: Session):
+    # create brand and category to add to new product
+    brand = create_basic_db_brand()
+    category = create_basic_db_category()
+
+    session.add(brand)
+    session.add(category)
+    session.commit()
+
     now = datetime.utcnow()
 
     # Try to pass expiration date that is too early (creation)
     response = client.post('/products', data=json.dumps({
         "name": "test",
         "rating": 5,
-        "brand": 0,
-        "categories": [0],
+        "brand": brand.id,
+        "categories": [category.id],
         "expiration_date": email_utils.format_datetime(now),
         "items_in_stock": 1
     }), content_type='application/json')
