@@ -4,7 +4,7 @@ This code base serves as the trial task for Python developers.
 
 ## Code characteristics
 
-* Works on Python py36, py37, py38
+* Tested on Python py38
 
 ## Setting up a development environment
 
