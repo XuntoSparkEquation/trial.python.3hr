@@ -13,8 +13,8 @@ def build_product_args(data: ProductUpdateRequest) -> Dict:
     """
     Turn ProductSchema into dict for updating Product orm object.
     Result can be used can be used as constructor argument
-    or can be iterated to replace field values.
-    Result always has enough data to create new Product instance.
+    or can be iterated through to update field values.
+
     @param data: request data ProductCreateRequest
     @return: dict with data
     """
@@ -73,7 +73,7 @@ def read_product(product_id: int):
 @products_blueprint.route('/products/<int:product_id>', methods=['PATCH'])
 def update_product(product_id: int):
     """
-    Update product. Endpoint accepts changes (patch update).
+    Update product. Endpoint accepts difference (patch update).
 
     @see ProductUpdateRequest for request body fields.
     @param product_id: ID of product we want to update.
